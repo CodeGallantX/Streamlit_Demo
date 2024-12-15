@@ -11,6 +11,10 @@ st.set_page_config(
     layout="wide"
 )
 
+# Initialize session state for dataset
+if "uploaded_data" not in st.session_state:
+    st.session_state["uploaded_data"] = None
+
 # App title and description
 st.title("📊 StatEase")
 st.write("A user-friendly statistics app for descriptive analysis, visualizations, and more!")
@@ -45,6 +49,9 @@ elif options == "Upload Dataset":
         else:
             df = pd.read_excel(uploaded_file)
 
+        # Store dataset in session state
+        st.session_state["uploaded_data"] = df
+
         st.write("**Preview of Uploaded Data**")
         st.dataframe(df.head())
 
@@ -61,11 +68,11 @@ elif options == "Upload Dataset":
 # Descriptive Statistics Section
 elif options == "Descriptive Statistics":
     st.subheader("Descriptive Statistics")
-    
-    # Placeholder for uploaded data
-    if "df" not in locals():
+
+    if st.session_state["uploaded_data"] is None:
         st.warning("Please upload a dataset first in the 'Upload Dataset' section.")
     else:
+        df = st.session_state["uploaded_data"]
         st.write("**Choose Columns for Analysis**")
         numeric_columns = df.select_dtypes(include=np.number).columns
         selected_columns = st.multiselect("Select numeric columns:", numeric_columns)
@@ -88,10 +95,11 @@ elif options == "Descriptive Statistics":
 # Data Visualizations Section
 elif options == "Data Visualizations":
     st.subheader("Data Visualizations")
-    
-    if "df" not in locals():
+
+    if st.session_state["uploaded_data"] is None:
         st.warning("Please upload a dataset first in the 'Upload Dataset' section.")
     else:
+        df = st.session_state["uploaded_data"]
         st.write("**Choose Columns for Visualization**")
         all_columns = df.columns
         selected_columns = st.multiselect("Select columns to visualize:", all_columns)
@@ -132,28 +140,24 @@ elif options == "Manual Data Input":
     input_type = st.radio("Choose Data Input Type:", ["Ungrouped Data", "Grouped Data"])
 
     if input_type == "Ungrouped Data":
-        st.write("Enter ungrouped data points:")
-        num_points = st.number_input("How many data points?", min_value=1, max_value=100, value=5)
-        ungrouped_data = []
+        st.write("Enter ungrouped data points in the table below:")
+        num_points = st.number_input("Number of data points:", min_value=1, max_value=100, value=5)
 
-        for i in range(num_points):
-            value = st.number_input(f"Data Point #{i+1}", key=f"point_{i}")
-            ungrouped_data.append(value)
-
-        st.write("**Entered Data:**", ungrouped_data)
+        # Create a table for input
+        ungrouped_data = pd.DataFrame({"Data Points": [0] * num_points})
+        edited_data = st.experimental_data_editor(ungrouped_data)
+        st.write("**Entered Data:**")
+        st.write(edited_data)
 
     elif input_type == "Grouped Data":
-        st.write("Enter grouped data:")
-        num_classes = st.number_input("How many classes?", min_value=1, max_value=10, value=5)
-        class_intervals = []
-        frequencies = []
+        st.write("Enter grouped data in the table below:")
+        num_classes = st.number_input("Number of classes:", min_value=1, max_value=10, value=5)
 
-        for i in range(num_classes):
-            interval = st.text_input(f"Class Interval #{i+1} (e.g., 10-20):", key=f"interval_{i}")
-            frequency = st.number_input(f"Frequency for {interval}:", min_value=1, max_value=100, key=f"freq_{i}")
-            class_intervals.append(interval)
-            frequencies.append(frequency)
-
-        st.write("**Grouped Frequency Table:**")
-        grouped_table = pd.DataFrame({"Class Interval": class_intervals, "Frequency": frequencies})
-        st.dataframe(grouped_table)
+        # Create a table for input
+        grouped_data = pd.DataFrame({
+            "Class Interval": [""] * num_classes,
+            "Frequency": [0] * num_classes
+        })
+        edited_data = st.experimental_data_editor(grouped_data)
+        st.write("**Entered Grouped Frequency Table:**")
+        st.write(edited_data)
