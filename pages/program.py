@@ -83,7 +83,7 @@ elif options == "Descriptive Statistics":
             st.write(selected_data.describe())
 
             # Compute central tendencies
-            st.write("**Central Tendency Measures**")
+            st.write("**Measures of Central Tendency**")
             for col in selected_columns:
                 st.write(f"- **{col}**: Mean = {selected_data[col].mean():.2f}, Median = {selected_data[col].median():.2f}, Mode = {selected_data[col].mode()[0]}")
 
@@ -140,24 +140,29 @@ elif options == "Manual Data Input":
     input_type = st.radio("Choose Data Input Type:", ["Ungrouped Data", "Grouped Data"])
 
     if input_type == "Ungrouped Data":
-        st.write("Enter ungrouped data points in the table below:")
-        num_points = st.number_input("Number of data points:", min_value=1, max_value=100, value=5)
+        st.write("Enter ungrouped data points:")
+        if "ungrouped_data" not in st.session_state:
+            st.session_state.ungrouped_data = pd.DataFrame({"Data Points": [None] * 5})
 
-        # Create a table for input
-        ungrouped_data = pd.DataFrame({"Data Points": [0] * num_points})
-        edited_data = st.experimental_data_editor(ungrouped_data)
+        st.write("You can edit the table below:")
+        st.session_state.ungrouped_data = st.experimental_data_editor(
+            st.session_state.ungrouped_data, num_rows="dynamic"
+        )
+
         st.write("**Entered Data:**")
-        st.write(edited_data)
+        st.write(st.session_state.ungrouped_data.dropna().reset_index(drop=True))
 
     elif input_type == "Grouped Data":
-        st.write("Enter grouped data in the table below:")
-        num_classes = st.number_input("Number of classes:", min_value=1, max_value=10, value=5)
+        st.write("Enter grouped data:")
+        if "grouped_data" not in st.session_state:
+            st.session_state.grouped_data = pd.DataFrame(
+                {"Class Interval": ["" for _ in range(5)], "Frequency": [None] * 5}
+            )
 
-        # Create a table for input
-        grouped_data = pd.DataFrame({
-            "Class Interval": [""] * num_classes,
-            "Frequency": [0] * num_classes
-        })
-        edited_data = st.experimental_data_editor(grouped_data)
-        st.write("**Entered Grouped Frequency Table:**")
-        st.write(edited_data)
+        st.write("Edit the table below:")
+        st.session_state.grouped_data = st.experimental_data_editor(
+            st.session_state.grouped_data, num_rows="dynamic"
+        )
+
+        st.write("**Grouped Frequency Table:**")
+        st.write(st.session_state.grouped_data.dropna().reset_index(drop=True))
